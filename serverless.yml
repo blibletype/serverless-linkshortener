@@ -1,0 +1,28 @@
+org: maxkoval
+app: serverless-linkshortener
+service: serverless-linkshortener
+frameworkVersion: '3'
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+
+custom:
+  esbuild:
+    minify: true
+    watch:
+      pattern: ['./index.ts', 'src/**/*.ts']
+      ignore: ['.serverless/**/*', '.build']
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  get:
+    handler: src/index.get
+    events:
+      - http:
+          path: hello/
+          method: get
+          cors: true
