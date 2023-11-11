@@ -2,6 +2,7 @@ org: maxkoval
 app: serverless-linkshortener
 service: serverless-linkshortener
 frameworkVersion: '3'
+useDotenv: true
 
 plugins:
   - serverless-esbuild
@@ -19,8 +20,6 @@ provider:
   runtime: nodejs18.x
   stage: dev
   region: eu-central-1
-  environment:
-    DYNAMODB_USERS_TABLE: UsersTable
   httpApi:
     cors: true
   iam:
@@ -30,37 +29,32 @@ provider:
           Action:
             - dynamodb:*
           Resource: '*'
+  environment:
+    userTableName: usersTable
+    JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
+    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
 
 functions:
-  get:
-    handler: src/index.get
-    events:
-      - http:
-          path: hello/
-          method: get
-  # signIn:
-  #   handler: src/auth/index.signIn
-  #   events:
-  #     - http:
-  #         path: auth/sign-in
-  #         method: post
-  signUp:
-    handler: src/auth/index.signUp
+  authSignUp:
+    handler: apps/auth/handler.signUp
     events:
       - http:
           path: auth/sign-up
           method: post
 
+	
 resources:
   Resources:
-    UsersTable:
+    usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.DYNAMODB_USERS_TABLE}
+        TableName: usersTable
         AttributeDefinitions:
-          - AttributeName: userId
+          - AttributeName: id
             AttributeType: S
         KeySchema:
-          - AttributeName: userId
+          - AttributeName: id
             KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
