@@ -17,6 +17,19 @@ custom:
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  region: eu-central-1
+  environment:
+    DYNAMODB_USERS_TABLE: UsersTable
+  httpApi:
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource: '*'
 
 functions:
   get:
@@ -25,4 +38,29 @@ functions:
       - http:
           path: hello/
           method: get
-          cors: true
+  # signIn:
+  #   handler: src/auth/index.signIn
+  #   events:
+  #     - http:
+  #         path: auth/sign-in
+  #         method: post
+  signUp:
+    handler: src/auth/index.signUp
+    events:
+      - http:
+          path: auth/sign-up
+          method: post
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_USERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
