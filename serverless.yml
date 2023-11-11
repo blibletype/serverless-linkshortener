@@ -41,8 +41,13 @@ functions:
       - http:
           path: auth/sign-up
           method: post
+  authSignIn:
+    handler: apps/auth/handler.signIn
+    events:
+      - http:
+          path: auth/sign-in
+          method: post
 
-	
 resources:
   Resources:
     usersTable:
