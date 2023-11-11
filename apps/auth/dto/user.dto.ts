@@ -6,5 +6,4 @@ export interface UserDto {
   refreshToken: string;
 }
 
-export type CreateUserDto = Omit<UserDto, 'id'>;
 export type ResponceUserDto = Omit<UserDto, 'email' | 'password'>;

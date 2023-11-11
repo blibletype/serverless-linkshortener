@@ -1,5 +1,5 @@
 import { DynamoDBClient, ScanCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
-import { UserDto } from '../dto/user';
+import { UserDto } from '../dto/user.dto';
 
 const tableName = 'usersTable';
 

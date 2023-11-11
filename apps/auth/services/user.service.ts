@@ -1,7 +1,7 @@
 import { v4 } from "uuid";
 import { hash } from 'bcryptjs';
 import { ConflictException } from "../../utils/api-error";
-import { ResponceUserDto } from "../dto/user";
+import { ResponceUserDto } from "../dto/user.dto";
 import { UserRepository } from "../repository/user.repository";
 import { AuthService } from "./auth.service";
 
