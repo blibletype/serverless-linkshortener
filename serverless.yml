@@ -2,6 +2,7 @@ org: maxkoval
 app: serverless-linkshortener
 service: serverless-linkshortener
 frameworkVersion: '3'
+useDotenv: true
 
 plugins:
   - serverless-esbuild
@@ -17,12 +18,43 @@ custom:
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  region: eu-central-1
+  httpApi:
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource: '*'
+  environment:
+    userTableName: usersTable
+    JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
+    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
 
 functions:
-  get:
-    handler: src/index.get
+  authSignUp:
+    handler: apps/auth/handler.signUp
     events:
       - http:
-          path: hello/
-          method: get
-          cors: true
+          path: auth/sign-up
+          method: post
+
+	
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: usersTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
