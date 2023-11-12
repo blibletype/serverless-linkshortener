@@ -15,6 +15,8 @@ custom:
       pattern: ['./index.ts', 'src/**/*.ts']
       ignore: ['.serverless/**/*', '.build']
   usersTableName: usersTable
+  linksTableName: linksTable
+  linksIdLength: 6
 
 provider:
   name: aws
@@ -29,15 +31,19 @@ provider:
         functionName: authorizerFunc
   environment:
     USERS_TABLE: ${self:custom.usersTableName}
+    LINKS_TABLE: ${self:custom.linksTableName}
     JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
     JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
+    LINK_ID_LENGTH: ${self:custom.linksIdLength}
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
             - dynamodb:*
-          Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.usersTableName}*"
+          Resource:
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.usersTableName}*"
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.linksTableName}*"
 
 functions:
   authorizerFunc:
@@ -66,20 +72,64 @@ functions:
           path: /auth/sign-in
           method: POST
 
+  createLink:
+    handler: apps/links/handler.create
+    events:
+      - httpApi:
+          path: /links
+          method: POST
+          authorizer:
+            name: jwt-auth
+
+  deactivateLink:
+    handler: apps/links/handler.deactivate
+    events:
+      - httpApi:
+          path: /links/{linkId}
+          method: DELETE
+          authorizer:
+            name: jwt-auth
+
+  listLink:
+    handler: apps/links/handler.list
+    events:
+      - httpApi:
+          path: /links
+          method: GET
+          authorizer:
+            name: jwt-auth
+
+  redirect:
+    handler: apps/links/handler.redirect
+    events:
+      - httpApi:
+          path: /{linkId}
+          method: GET
+
 resources:
   Resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.usersTableName}
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+
+    linksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.linksTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
 
 
