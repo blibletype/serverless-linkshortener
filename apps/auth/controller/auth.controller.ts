@@ -27,7 +27,7 @@ export class AuthController {
 
       const response = await this.userService.signIn(body.email, body.password);
 
-      return ResponseUtil.success(201, response);
+      return ResponseUtil.success(200, response);
     } catch (error: any) {
       return ResponseUtil.error(error);
     }

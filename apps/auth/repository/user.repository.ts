@@ -1,7 +1,7 @@
 import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
 import {CreateUserDto, UserDto} from '../dto/userDto';
 
-const tableName = 'usersTable';
+const tableName = process.env.USERS_TABLE;
 
 export class UserRepository {
   private client = new DynamoDBClient();

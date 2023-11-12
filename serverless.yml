@@ -14,6 +14,7 @@ custom:
     watch:
       pattern: ['./index.ts', 'src/**/*.ts']
       ignore: ['.serverless/**/*', '.build']
+  usersTableName: usersTable
 
 provider:
   name: aws
@@ -22,38 +23,55 @@ provider:
   region: eu-central-1
   httpApi:
     cors: true
+    authorizers:
+      jwt-auth:
+        type: request
+        functionName: authorizerFunc
+  environment:
+    USERS_TABLE: ${self:custom.usersTableName}
+    JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
+    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
             - dynamodb:*
-          Resource: '*'
-  environment:
-    userTableName: usersTable
-    JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
-    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
+          Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.usersTableName}*"
 
 functions:
+  authorizerFunc:
+    handler: apps/auth/authorizer.isAuthenticated
+
+  hello:
+    handler: apps/auth/handler.hello
+    events:
+      - httpApi:
+          path: /hello
+          method: GET
+          authorizer:
+            name: jwt-auth
+
   authSignUp:
     handler: apps/auth/handler.signUp
     events:
-      - http:
-          path: auth/sign-up
-          method: post
+      - httpApi:
+          path: /auth/sign-up
+          method: POST
+
   authSignIn:
     handler: apps/auth/handler.signIn
     events:
-      - http:
-          path: auth/sign-in
-          method: post
+      - httpApi:
+          path: /auth/sign-in
+          method: POST
 
 resources:
   Resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: usersTable
+        TableName: ${self:custom.usersTableName}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -63,3 +81,5 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+
+
