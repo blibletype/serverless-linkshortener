@@ -11,9 +11,23 @@ export class AuthController {
 
       validateAuthBody(body);
 
-      const data = await this.userService.create(body.email, body.password);
+      const response = await this.userService.signUp(body.email, body.password);
 
-      return ResponseUtil.success(201, data);
+      return ResponseUtil.success(201, response);
+    } catch (error: any) {
+      return ResponseUtil.error(error);
+    }
+  }
+
+  public async singIn(event: any) {
+    try {
+      const body = JSON.parse(event.body);
+
+      validateAuthBody(body);
+
+      const response = await this.userService.signIn(body.email, body.password);
+
+      return ResponseUtil.success(200, response);
     } catch (error: any) {
       return ResponseUtil.error(error);
     }

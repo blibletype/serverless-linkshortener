@@ -1,4 +1,4 @@
-import { sign, verify } from 'jsonwebtoken';
+import {sign, verify} from 'jsonwebtoken';
 
 export interface TokenPayload {
   id: string;
@@ -6,29 +6,33 @@ export interface TokenPayload {
 }
 
 export class AuthService {
-  signAccessToken(payload: TokenPayload) {
+  signAccessToken(payload: TokenPayload): string | null {
     const secret = process.env.JWT_ACCESS_SECRET;
-    if (secret) return sign(payload, secret, { expiresIn: '60m' });
+    if (!secret) return null;
+    return sign(payload, secret, { expiresIn: '60m' });
   }
 
-  signRefreshToken(payload: TokenPayload) {
+  signRefreshToken(payload: TokenPayload): string | null {
     const secret = process.env.JWT_REFRESH_SECRET;
-    if (secret) return sign(payload, secret, {});
+    if (!secret) return null;
+    return sign(payload, secret, {});
   }
 
-  validateAccessToken(accessToken: string) {
+  verifyAccessToken(accessToken: string): TokenPayload | null {
     try {
       const secret = process.env.JWT_ACCESS_SECRET;
-      if (secret) return verify(accessToken, secret);
+      if (!secret) return null;
+      return verify(accessToken, secret) as TokenPayload;
     } catch (error) {
       return null;
     }
   }
 
-  validateRefreshToken(refreshToken: string) {
+  verifyRefreshToken(refreshToken: string): TokenPayload | null {
     try {
       const secret = process.env.JWT_REFRESH_SECRET;
-      if (secret) return verify(refreshToken, secret);
+      if (!secret) return null;
+      return verify(refreshToken, secret) as TokenPayload;
     } catch (error) {
       return null;
     }
