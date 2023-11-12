@@ -1,4 +1,4 @@
-import {AuthController} from "./controller/auth.controller";
+import { AuthController } from "./controller/auth.controller";
 
 const authController = new AuthController();
 
