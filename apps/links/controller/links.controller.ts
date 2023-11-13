@@ -74,4 +74,12 @@ export class LinksController {
       return ResponseUtil.error(error);
     }
   }
+
+  public async removeExpiredLinks(event: any) {
+    try {
+      await this.linksService.destroyExpired();
+    } catch (error: any) {
+      return ResponseUtil.error(error);
+    }
+  }
 }

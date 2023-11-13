@@ -43,4 +43,28 @@ export class LinksService {
   public async findAll(userId: string): Promise<LinkDto[]> {
     return await this.linksRepository.findAllByUserId(userId);
   }
+
+  public async destroyExpired(): Promise<void> {
+    const items = await this.linksRepository.findAll();
+    for (const item of items) {
+      if (!item.expiresIn) continue;
+
+      const isExpired = this.isExpired(item.createdAt, item.expiresIn);
+      if (!isExpired) continue;
+
+      await this.linksRepository.destroy(item.id);
+      //email user about expiration
+    }
+  }
+
+  private isExpired(createdAtISO: string, expiresIn: string): boolean {
+    const createdAt = new Date(createdAtISO);
+
+    const value = Number(expiresIn.at(0));
+
+    createdAt.setDate(createdAt.getDate() + value);
+
+    const currentTime = new Date().toISOString();
+    return currentTime > createdAt.toISOString();
+  }
 }

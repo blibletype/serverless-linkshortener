@@ -41,6 +41,16 @@ export class LinksRepository {
     return this.mapDynamoDBItemToLinkDto(response.Item);
   }
 
+  public async findAll(): Promise<LinkDto[]> {
+    const params = { TableName: tableName };
+    const response = await this.client.send(new ScanCommand(params));
+    if (response.Items && response.Items.length > 0) {
+      return response.Items.map((item) => this.mapDynamoDBItemToLinkDto(item));
+    } else {
+      return [];
+    }
+  }
+
   public async findAllByUserId(userId: string): Promise<LinkDto[]> {
     const params = {
       TableName: tableName,
