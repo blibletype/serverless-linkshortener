@@ -1,4 +1,4 @@
-import { v4 } from "uuid";
+import { nanoid } from "nanoid";
 import { hash, compare } from 'bcryptjs';
 import { ConflictException, NotFoundException, UnauthorizedException } from "../../utils/api-error";
 import { UserRepository } from "../repository/user.repository";
@@ -13,7 +13,7 @@ export class UserService {
     const user = await this.userRepository.findOneByEmail(email);
     if (user) throw new ConflictException('This email already taken');
 
-    const id = v4();
+    const id = nanoid();
     const hashedPassword = await hash(password, 10);
 
     const accessToken = this.authService.signAccessToken({ id, email });
