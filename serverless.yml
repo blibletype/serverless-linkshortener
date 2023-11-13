@@ -49,15 +49,6 @@ functions:
   authorizerFunc:
     handler: apps/auth/authorizer.isAuthenticated
 
-  hello:
-    handler: apps/auth/handler.hello
-    events:
-      - httpApi:
-          path: /hello
-          method: GET
-          authorizer:
-            name: jwt-auth
-
   authSignUp:
     handler: apps/auth/handler.signUp
     events:
@@ -105,6 +96,12 @@ functions:
       - httpApi:
           path: /{linkId}
           method: GET
+
+  deactivateExpired:
+    handler: apps/links/handler.removeExpiredLinks
+    events:
+      - eventBridge:
+          schedule: rate(3 minutes)
 
 resources:
   Resources:
