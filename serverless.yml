@@ -1,8 +1,9 @@
-org: maxkoval
-app: serverless-linkshortener
 service: serverless-linkshortener
 frameworkVersion: '3'
 useDotenv: true
+
+package:
+  individually: true
 
 plugins:
   - serverless-esbuild
@@ -15,10 +16,13 @@ custom:
     watch:
       pattern: ['./index.ts', 'src/**/*.ts']
       ignore: ['.serverless/**/*', '.build']
-  usersTableName: usersTable
-  linksTableName: linksTable
-  linksIdLength: 6
-  senderEmailAddress: maxymkoval2510@gmail.com
+
+  USERS_TABLE_NAME: usersTable
+  LINKS_TABLE_NAME: linksTable
+  LINK_ID_LENGTH: 6
+  SENDER_EMAIL_ADDRESS: maxymkoval2510@gmail.com
+  JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
+  JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
 
 provider:
   name: aws
@@ -31,16 +35,16 @@ provider:
     authorizers:
       jwt-auth:
         type: request
-        functionName: authorizerFunc
+        functionName: authorizer
 
   environment:
     QUEUE_URL: ${construct:jobs.queueUrl}
-    USERS_TABLE: ${self:custom.usersTableName}
-    LINKS_TABLE: ${self:custom.linksTableName}
-    JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
-    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
-    LINK_ID_LENGTH: ${self:custom.linksIdLength}
-    SENDER_EMAIL_ADDRESS: ${self:custom.senderEmailAddress}
+    USERS_TABLE: ${self:custom.USERS_TABLE_NAME}
+    LINKS_TABLE: ${self:custom.LINKS_TABLE_NAME}
+    JWT_ACCESS_SECRET: ${self:custom.JWT_ACCESS_SECRET}
+    JWT_REFRESH_SECRET: ${self:custom.JWT_REFRESH_SECRET}
+    LINK_ID_LENGTH: ${self:custom.LINK_ID_LENGTH}
+    SENDER_EMAIL_ADDRESS: ${self:custom.SENDER_EMAIL_ADDRESS}
 
   iam:
     role:
@@ -50,8 +54,8 @@ provider:
             - dynamodb:*
             - ses:SendEmail
           Resource:
-            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.usersTableName}*"
-            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.linksTableName}*"
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.USERS_TABLE_NAME}*"
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.LINKS_TABLE_NAME}*"
             - "arn:aws:ses:${aws:region}:${aws:accountId}:identity/${self:custom.senderEmailAddress}*"
             - "arn:aws:ses:${aws:region}:${aws:accountId}:configuration-set/my-first-configuration-set"
 
@@ -62,69 +66,15 @@ constructs:
       handler: apps/notify/worker.sendEmail
 
 functions:
-  authorizerFunc:
-    handler: apps/auth/authorizer.isAuthenticated
-
-  authSignUp:
-    handler: apps/auth/handler.signUp
-    events:
-      - httpApi:
-          path: /auth/sign-up
-          method: POST
-
-  authSignIn:
-    handler: apps/auth/handler.signIn
-    events:
-      - httpApi:
-          path: /auth/sign-in
-          method: POST
-
-  createLink:
-    handler: apps/links/handler.create
-    events:
-      - httpApi:
-          path: /links
-          method: POST
-          authorizer:
-            name: jwt-auth
-
-  deactivateLink:
-    handler: apps/links/handler.deactivate
-    events:
-      - httpApi:
-          path: /links/{linkId}
-          method: DELETE
-          authorizer:
-            name: jwt-auth
-
-  deactivateExpired:
-    handler: apps/links/handler.removeExpiredLinks
-    events:
-      - eventBridge:
-          schedule: rate(3 minutes)
-
-  listLink:
-    handler: apps/links/handler.list
-    events:
-      - httpApi:
-          path: /links
-          method: GET
-          authorizer:
-            name: jwt-auth
-
-  redirect:
-    handler: apps/links/handler.redirect
-    events:
-      - httpApi:
-          path: /{linkId}
-          method: GET
+  - ${file(./auth-functions.yml)}
+  - ${file(./links-functions.yml)}
 
 resources:
   Resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.usersTableName}
+        TableName: ${self:custom.USERS_TABLE_NAME}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
@@ -136,7 +86,7 @@ resources:
     linksTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.linksTableName}
+        TableName: ${self:custom.LINKS_TABLE_NAME}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
