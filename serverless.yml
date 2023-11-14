@@ -7,6 +7,7 @@ useDotenv: true
 plugins:
   - serverless-esbuild
   - serverless-offline
+  - serverless-lift
 
 custom:
   esbuild:
@@ -17,33 +18,48 @@ custom:
   usersTableName: usersTable
   linksTableName: linksTable
   linksIdLength: 6
+  senderEmailAddress: maxymkoval2510@gmail.com
 
 provider:
   name: aws
   runtime: nodejs18.x
   stage: dev
   region: eu-central-1
+
   httpApi:
     cors: true
     authorizers:
       jwt-auth:
         type: request
         functionName: authorizerFunc
+
   environment:
+    QUEUE_URL: ${construct:jobs.queueUrl}
     USERS_TABLE: ${self:custom.usersTableName}
     LINKS_TABLE: ${self:custom.linksTableName}
     JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
     JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
     LINK_ID_LENGTH: ${self:custom.linksIdLength}
+    SENDER_EMAIL_ADDRESS: ${self:custom.senderEmailAddress}
+
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
             - dynamodb:*
+            - ses:SendEmail
           Resource:
             - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.usersTableName}*"
             - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.linksTableName}*"
+            - "arn:aws:ses:${aws:region}:${aws:accountId}:identity/${self:custom.senderEmailAddress}*"
+            - "arn:aws:ses:${aws:region}:${aws:accountId}:configuration-set/my-first-configuration-set"
+
+constructs:
+  jobs:
+    type: queue
+    worker:
+      handler: apps/notify/worker.sendEmail
 
 functions:
   authorizerFunc:
@@ -81,6 +97,12 @@ functions:
           authorizer:
             name: jwt-auth
 
+  deactivateExpired:
+    handler: apps/links/handler.removeExpiredLinks
+    events:
+      - eventBridge:
+          schedule: rate(3 minutes)
+
   listLink:
     handler: apps/links/handler.list
     events:
@@ -96,12 +118,6 @@ functions:
       - httpApi:
           path: /{linkId}
           method: GET
-
-  deactivateExpired:
-    handler: apps/links/handler.removeExpiredLinks
-    events:
-      - eventBridge:
-          schedule: rate(3 minutes)
 
 resources:
   Resources:
