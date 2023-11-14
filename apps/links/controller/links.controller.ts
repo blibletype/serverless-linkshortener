@@ -79,7 +79,7 @@ export class LinksController {
     try {
       await this.linksService.destroyExpired();
     } catch (error: any) {
-      return ResponseUtil.error(error);
+      console.log(error);
     }
   }
 }
