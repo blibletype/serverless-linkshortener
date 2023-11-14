@@ -22,7 +22,7 @@ export const sendToEmailQueue = async (userId: string, message: string): Promise
           StringValue: message
         }
       },
-      MessageBody: 'Link expired'
+      MessageBody: 'Link deactivated'
     });
     await sqs.send(command);
   } catch (error) {

@@ -43,7 +43,7 @@ export class LinksService {
     await this.linksRepository.destroy(linkId);
 
     const message = `
-      Your link: ${item.originLink} has been expired.
+      Your link: ${item.originLink} has been deactivated.
       Visits: ${item.visits}
       `;
     await sendToEmailQueue(userId, message);

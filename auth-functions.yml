@@ -1,15 +1,15 @@
 authorizer:
-  handler: apps/auth/authorizer.isAuthenticated
+  handler: src/auth/authorizer.isAuthenticated
 
 authSignUp:
-  handler: apps/auth/handler.signUp
+  handler: src/auth/handler.signUp
   events:
     - httpApi:
         path: /auth/sign-up
         method: POST
 
 authSignIn:
-  handler: apps/auth/handler.signIn
+  handler: src/auth/handler.signIn
   events:
     - httpApi:
         path: /auth/sign-in

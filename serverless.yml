@@ -1,3 +1,5 @@
+org: maxkoval
+app: serverless-linkshortener
 service: serverless-linkshortener
 frameworkVersion: '3'
 useDotenv: true
@@ -7,15 +9,13 @@ package:
 
 plugins:
   - serverless-esbuild
+  - serverless-create-global-dynamodb-table
   - serverless-offline
   - serverless-lift
 
 custom:
   esbuild:
     minify: true
-    watch:
-      pattern: ['./index.ts', 'src/**/*.ts']
-      ignore: ['.serverless/**/*', '.build']
 
   USERS_TABLE_NAME: usersTable
   LINKS_TABLE_NAME: linksTable
@@ -24,11 +24,18 @@ custom:
   JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
   JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
 
+  globalTables:
+    version: v2
+    regions:
+      - eu-west-1
+      - eu-west-2
+    createStack: true
+
 provider:
   name: aws
   runtime: nodejs18.x
   stage: dev
-  region: eu-central-1
+  region: ${opt:region}
 
   httpApi:
     cors: true
@@ -52,18 +59,16 @@ provider:
         - Effect: Allow
           Action:
             - dynamodb:*
-            - ses:SendEmail
+            - ses:*
           Resource:
-            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.USERS_TABLE_NAME}*"
-            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.LINKS_TABLE_NAME}*"
-            - "arn:aws:ses:${aws:region}:${aws:accountId}:identity/${self:custom.senderEmailAddress}*"
-            - "arn:aws:ses:${aws:region}:${aws:accountId}:configuration-set/my-first-configuration-set"
+            - "*"
 
 constructs:
   jobs:
     type: queue
+    batchSize: 10
     worker:
-      handler: apps/notify/worker.sendEmail
+      handler: src/notify/worker.sendEmail
 
 functions:
   - ${file(./auth-functions.yml)}
@@ -73,6 +78,7 @@ resources:
   Resources:
     usersTable:
       Type: AWS::DynamoDB::Table
+      Condition: RegionEuCentral1
       Properties:
         TableName: ${self:custom.USERS_TABLE_NAME}
         BillingMode: PAY_PER_REQUEST
@@ -85,6 +91,7 @@ resources:
 
     linksTable:
       Type: AWS::DynamoDB::Table
+      Condition: RegionEuCentral1
       Properties:
         TableName: ${self:custom.LINKS_TABLE_NAME}
         BillingMode: PAY_PER_REQUEST
@@ -95,4 +102,5 @@ resources:
           - AttributeName: id
             KeyType: HASH
 
-
+  Conditions:
+    RegionEuCentral1: !Equals [ !Ref "AWS::Region", eu-central-1 ]
