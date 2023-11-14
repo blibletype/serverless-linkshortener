@@ -1,10 +1,13 @@
 import { nanoid } from 'nanoid';
 import { LinksRepository } from "../repository/links.repository";
-import {NotFoundException, UnauthorizedException} from "../../utils/api-error";
+import { NotFoundException, UnauthorizedException } from "../../utils/api-error";
 import { LinkDto } from "../dto/link.dto";
+import { sendToEmailQueue } from "../../utils/send-to-email-queue";
+
 
 export class LinksService {
   private linksRepository = new LinksRepository();
+
   public async create(originLink: string, expiresIn: string = '', userId: string): Promise<string> {
     const length = process.env.LINK_ID_LENGTH ? parseInt(process.env.LINK_ID_LENGTH) : 6;
     const id = nanoid(length);
@@ -38,6 +41,12 @@ export class LinksService {
     if (item.userId !== userId) throw new UnauthorizedException();
 
     await this.linksRepository.destroy(linkId);
+
+    const message = `
+      Your link: ${item.originLink} has been expired.
+      Visits: ${item.visits}
+      `;
+    await sendToEmailQueue(userId, message);
   }
 
   public async findAll(userId: string): Promise<LinkDto[]> {
@@ -53,7 +62,12 @@ export class LinksService {
       if (!isExpired) continue;
 
       await this.linksRepository.destroy(item.id);
-      //email user about expiration
+
+      const message = `
+      Your link: ${item.originLink} has been expired.
+      Visits: ${item.visits}
+      `;
+      await sendToEmailQueue(item.userId, message);
     }
   }
 
