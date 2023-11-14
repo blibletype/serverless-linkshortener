@@ -1,0 +1,39 @@
+createLink:
+  handler: apps/links/handler.create
+  events:
+    - httpApi:
+        path: /links
+        method: POST
+        authorizer:
+          name: jwt-auth
+
+deactivateLink:
+  handler: apps/links/handler.deactivate
+  events:
+    - httpApi:
+        path: /links/{linkId}
+        method: DELETE
+        authorizer:
+          name: jwt-auth
+
+deactivateExpired:
+  handler: apps/links/handler.removeExpiredLinks
+  events:
+    - eventBridge:
+        schedule: rate(3 minutes)
+
+listLink:
+  handler: apps/links/handler.list
+  events:
+    - httpApi:
+        path: /links
+        method: GET
+        authorizer:
+          name: jwt-auth
+
+redirect:
+  handler: apps/links/handler.redirect
+  events:
+    - httpApi:
+        path: /{linkId}
+        method: GET
