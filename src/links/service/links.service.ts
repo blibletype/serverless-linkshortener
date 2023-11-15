@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
 import { LinksRepository } from "../repository/links.repository";
-import { NotFoundException, UnauthorizedException } from "../../utils/api-error";
+import {ForbiddenException, NotFoundException, UnauthorizedException} from "../../utils/api-error";
 import { LinkDto } from "../dto/link.dto";
 import { sendToEmailQueue } from "../../utils/send-to-email-queue";
 
@@ -38,7 +38,7 @@ export class LinksService {
 
     if (!item) throw new NotFoundException();
 
-    if (item.userId !== userId) throw new UnauthorizedException();
+    if (item.userId !== userId) throw new ForbiddenException();
 
     await this.linksRepository.destroy(linkId);
 
