@@ -6,6 +6,11 @@ createLink:
         method: POST
         authorizer:
           name: jwt-auth
+        bodyType: CreateLinkBody
+        responses:
+          201:
+            description: Successful
+            bodyType: ResponseCreateLinkBody
 
 deactivateLink:
   handler: src/links/handler.deactivate
@@ -15,6 +20,16 @@ deactivateLink:
         method: DELETE
         authorizer:
           name: jwt-auth
+        responses:
+          200:
+            description: Successful
+            bodyType: ResponseDeactivateLinkBody
+          403:
+            description: Forbidden
+            bodyType: ResponseError
+          404:
+            description: Not Found
+            bodyType: ResponseError
 
 deactivateExpired:
   handler: src/links/handler.removeExpiredLinks
@@ -30,6 +45,10 @@ listLink:
         method: GET
         authorizer:
           name: jwt-auth
+        responses:
+          200:
+            description: Successful
+            bodyType: ResponseListLinks
 
 redirect:
   handler: src/links/handler.redirect
@@ -37,3 +56,9 @@ redirect:
     - httpApi:
         path: /{linkId}
         method: GET
+        responses:
+          302:
+            description: Redirect to origin url
+          404:
+            description: Not Found
+            bodyType: ResponseError
