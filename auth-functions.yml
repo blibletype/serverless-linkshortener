@@ -1,0 +1,32 @@
+authorizer:
+  handler: src/auth/authorizer.isAuthenticated
+
+authSignUp:
+  handler: src/auth/handler.signUp
+  events:
+    - httpApi:
+        path: /auth/sign-up
+        method: POST
+        bodyType: RequestAuthBody
+        responses:
+          201:
+            description: Successful
+            bodyType: ResponseAuthBody
+          409:
+            description: Email already exist
+
+authSignIn:
+  handler: src/auth/handler.signIn
+  events:
+    - httpApi:
+        path: /auth/sign-in
+        method: POST
+        bodyType: RequestAuthBody
+        responses:
+          200:
+            description: Successful
+            bodyType: ResponseAuthBody
+          401:
+            description: Invalid credentials
+          404:
+            description: User Not Found

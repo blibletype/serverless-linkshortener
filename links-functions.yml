@@ -1,0 +1,64 @@
+createLink:
+  handler: src/links/handler.create
+  events:
+    - httpApi:
+        path: /links
+        method: POST
+        authorizer:
+          name: jwt-auth
+        bodyType: CreateLinkBody
+        responses:
+          201:
+            description: Successful
+            bodyType: ResponseCreateLinkBody
+
+deactivateLink:
+  handler: src/links/handler.deactivate
+  events:
+    - httpApi:
+        path: /links/{linkId}
+        method: DELETE
+        authorizer:
+          name: jwt-auth
+        responses:
+          200:
+            description: Successful
+            bodyType: ResponseDeactivateLinkBody
+          403:
+            description: Forbidden
+            bodyType: ResponseError
+          404:
+            description: Not Found
+            bodyType: ResponseError
+
+deactivateExpired:
+  handler: src/links/handler.removeExpiredLinks
+  events:
+    - eventBridge:
+        schedule: rate(3 minutes)
+
+listLink:
+  handler: src/links/handler.list
+  events:
+    - httpApi:
+        path: /links
+        method: GET
+        authorizer:
+          name: jwt-auth
+        responses:
+          200:
+            description: Successful
+            bodyType: ResponseListLinks
+
+redirect:
+  handler: src/links/handler.redirect
+  events:
+    - httpApi:
+        path: /{linkId}
+        method: GET
+        responses:
+          302:
+            description: Redirect to origin url
+          404:
+            description: Not Found
+            bodyType: ResponseError

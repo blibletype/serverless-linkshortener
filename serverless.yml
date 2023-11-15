@@ -2,27 +2,110 @@ org: maxkoval
 app: serverless-linkshortener
 service: serverless-linkshortener
 frameworkVersion: '3'
+useDotenv: true
+
+package:
+  individually: true
 
 plugins:
   - serverless-esbuild
-  - serverless-offline
+  - serverless-create-global-dynamodb-table
+  - serverless-auto-swagger
+  - serverless-lift
 
 custom:
   esbuild:
     minify: true
-    watch:
-      pattern: ['./index.ts', 'src/**/*.ts']
-      ignore: ['.serverless/**/*', '.build']
+
+  USERS_TABLE_NAME: usersTable
+  LINKS_TABLE_NAME: linksTable
+  LINK_ID_LENGTH: 6
+  SENDER_EMAIL_ADDRESS: maxymkoval2510@gmail.com
+  JWT_ACCESS_SECRET: ${env:JWT_ACCESS_SECRET}
+  JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
+
+  globalTables:
+    version: v2
+    regions:
+      - eu-west-1
+    createStack: false
+
+  autoswagger:
+    apiType: httpApi
+    apiKeyHeaders: ['Authorization']
 
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  region: ${opt:region}
+
+  httpApi:
+    cors: true
+    authorizers:
+      jwt-auth:
+        type: request
+        functionName: authorizer
+
+  environment:
+    QUEUE_URL: ${construct:jobs.queueUrl}
+    USERS_TABLE: ${self:custom.USERS_TABLE_NAME}
+    LINKS_TABLE: ${self:custom.LINKS_TABLE_NAME}
+    JWT_ACCESS_SECRET: ${self:custom.JWT_ACCESS_SECRET}
+    JWT_REFRESH_SECRET: ${self:custom.JWT_REFRESH_SECRET}
+    LINK_ID_LENGTH: ${self:custom.LINK_ID_LENGTH}
+    SENDER_EMAIL_ADDRESS: ${self:custom.SENDER_EMAIL_ADDRESS}
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+            - ses:*
+          Resource:
+            - "*"
+
+constructs:
+  jobs:
+    type: queue
+    batchSize: 10
+    worker:
+      handler: src/notify/worker.sendEmail
 
 functions:
-  get:
-    handler: src/index.get
-    events:
-      - http:
-          path: hello/
-          method: get
-          cors: true
+  - ${file(./auth-functions.yml)}
+  - ${file(./links-functions.yml)}
+
+resources:
+  Conditions:
+    RegionEuCentral1: !Equals [ !Ref "AWS::Region", eu-central-1 ]
+
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Condition: RegionEuCentral1
+      Properties:
+        TableName: ${self:custom.USERS_TABLE_NAME}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    linksTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Condition: RegionEuCentral1
+      Properties:
+        TableName: ${self:custom.LINKS_TABLE_NAME}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH

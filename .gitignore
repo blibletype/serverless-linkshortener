@@ -131,3 +131,9 @@ dist
 
 # esbuild
 .esbuild
+
+# IDE
+.idea
+
+# docs
+swagger
