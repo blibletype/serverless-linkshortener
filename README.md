@@ -46,7 +46,15 @@ Before deploying the project, ensure you have the following:
     AWS_SECRET_ACCESS_KEY=your_aws_secret_key
     ```
 
-4. **Deploy the project:**
+4. **Provide your aws credentials:**
+
+    ```bash
+    serverless config credentials --provider aws --key 1234 --secret 5678
+    ```
+
+   Replace `key and secret value`.
+
+5**Deploy the project:**
 
     ```bash
     serverless deploy --region your-region
