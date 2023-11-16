@@ -94,35 +94,35 @@ resources:
                   Resource:
                     - "*"
 
-#    usersTable:
-#      Type: AWS::DynamoDB::Table
-#      DeletionPolicy: Retain
-#      Condition: RegionEuCentral1
-#      Properties:
-#        TableName: ${env:USERS_TABLE}
-#        BillingMode: PAY_PER_REQUEST
-#        AttributeDefinitions:
-#          - AttributeName: id
-#            AttributeType: S
-#        KeySchema:
-#          - AttributeName: id
-#            KeyType: HASH
-#
-#    linksTable:
-#      Type: AWS::DynamoDB::Table
-#      DeletionPolicy: Retain
-#      Condition: RegionEuCentral1
-#      Properties:
-#        TableName: ${env:LINKS_TABLE}
-#        BillingMode: PAY_PER_REQUEST
-#        AttributeDefinitions:
-#          - AttributeName: id
-#            AttributeType: S
-#        KeySchema:
-#          - AttributeName: id
-#            KeyType: HASH
-#
-#  Conditions:
-#    RegionEuCentral1: !Equals [ !Ref "AWS::Region", eu-central-1 ]
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Condition: RegionEuCentral1
+      Properties:
+        TableName: ${env:USERS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    linksTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Condition: RegionEuCentral1
+      Properties:
+        TableName: ${env:LINKS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+  Conditions:
+    RegionEuCentral1: !Equals [ !Ref "AWS::Region", eu-central-1 ]
 
 
