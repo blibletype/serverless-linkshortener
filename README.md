@@ -52,9 +52,9 @@ Before deploying the project, ensure you have the following:
     serverless config credentials --provider aws --key 1234 --secret 5678
     ```
 
-   Replace `key and secret value`.
+   Replace `key` and `secret` values.
 
-5**Deploy the project:**
+5. **Deploy the project:**
 
     ```bash
     serverless deploy --region your-region
