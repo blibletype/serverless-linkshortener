@@ -16,7 +16,7 @@ export class LinksController {
 
       const linkId = await this.linksService.create(originLink, expiresIn, userId);
 
-      const newLink = `https://${event.headers.host}/${linkId}`;
+      const newLink = process.env.BASE_URL + linkId;
 
       return ResponseUtil.success(201, { newLink, originLink });
     } catch (error: any) {
@@ -58,13 +58,12 @@ export class LinksController {
   public async findAll(event: any) {
     try {
       const { userId } = event.requestContext.authorizer.lambda;
-
       const items = await this.linksService.findAll(userId);
 
       const formattedItems = items.map((item) => {
         const { id, userId, ...rest } = item;
         return {
-          link: `https://${event.headers.host}/${id}`,
+          link: process.env.BASE_URL + id,
           ...rest
         }
       });
@@ -75,11 +74,12 @@ export class LinksController {
     }
   }
 
-  public async removeExpiredLinks(event: any) {
+  public async deactivateExpired(event: any) {
     try {
-      await this.linksService.destroyExpired();
+      await this.linksService.deactivateExpired(event.linkId);
     } catch (error: any) {
       console.log(error);
+      return ResponseUtil.error(error);
     }
   }
 }

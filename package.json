@@ -12,6 +12,7 @@
   "license": "ISC",
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.449.0",
+    "@aws-sdk/client-scheduler": "^3.451.0",
     "@aws-sdk/client-ses": "^3.449.0",
     "@aws-sdk/client-sqs": "^3.449.0",
     "@types/bcryptjs": "^2.4.6",
@@ -20,6 +21,7 @@
     "esbuild": "^0.19.5",
     "serverless-auto-swagger": "^2.12.0",
     "serverless-create-global-dynamodb-table": "^3.1.1",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-esbuild": "^1.48.5",
     "serverless-lift": "^1.28.1",
     "typescript": "^5.2.2"
