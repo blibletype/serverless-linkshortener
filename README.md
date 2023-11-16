@@ -40,10 +40,14 @@ Before deploying the project, ensure you have the following:
    Copy the `.env.example` file to `.env` and fill in the required values:
 
     ```env
-    JWT_ACCESS_SECRET=your_access_secret
-    JWT_REFRESH_SECRET=your_refresh_secret
-    AWS_ACCESS_KEY_ID=your_aws_access_key
-    AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+    JWT_ACCESS_SECRET=your_value
+    JWT_REFRESH_SECRET=your_value
+
+    USERS_TABLE=your_value
+    LINKS_TABLE=your_value
+    LINK_ID_LENGTH=your_value
+    SENDER_EMAIL_ADDRESS=your_value
+    REGION=your_value
     ```
 
 4. **Provide your aws credentials:**
@@ -57,10 +61,8 @@ Before deploying the project, ensure you have the following:
 5. **Deploy the project:**
 
     ```bash
-    serverless deploy --region your-region
+    serverless deploy
     ```
-
-   Replace `your-region` with the desired AWS region (e.g., `eu-central-1`).
 
 ## Usage
 
