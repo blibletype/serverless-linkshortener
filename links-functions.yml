@@ -32,10 +32,7 @@ deactivateLink:
             bodyType: ResponseError
 
 deactivateExpired:
-  handler: src/links/handler.removeExpiredLinks
-  events:
-    - eventBridge:
-        schedule: rate(3 minutes)
+  handler: src/links/handler.deactivateExpired
 
 listLink:
   handler: src/links/handler.list

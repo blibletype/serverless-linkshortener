@@ -14,5 +14,5 @@ export const deactivate = async (event: any) =>
 export const list = async (event: any) =>
   linksController.findAll(event);
 
-export const removeExpiredLinks = async (event: any) =>
-  linksController.removeExpiredLinks(event);
+export const deactivateExpired = async (event: any) =>
+  linksController.deactivateExpired(event);

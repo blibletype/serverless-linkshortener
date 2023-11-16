@@ -1,12 +1,14 @@
 import { nanoid } from 'nanoid';
 import { LinksRepository } from "../repository/links.repository";
-import {ForbiddenException, NotFoundException, UnauthorizedException} from "../../utils/api-error";
+import { ForbiddenException, NotFoundException } from "../../utils/api-error";
 import { LinkDto } from "../dto/link.dto";
 import { sendToEmailQueue } from "../../utils/send-to-email-queue";
+import { SchedulerClient, CreateScheduleCommand, CreateScheduleCommandInput } from "@aws-sdk/client-scheduler";
 
 
 export class LinksService {
   private linksRepository = new LinksRepository();
+  private scheduler = new SchedulerClient();
 
   public async create(originLink: string, expiresIn: string = '', userId: string): Promise<string> {
     const length = process.env.LINK_ID_LENGTH ? parseInt(process.env.LINK_ID_LENGTH) : 6;
@@ -15,6 +17,11 @@ export class LinksService {
     const visits = 0;
 
     await this.linksRepository.create({ id, originLink, visits, createdAt, expiresIn, userId });
+    if (expiresIn) {
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + Number(expiresIn.slice(0, -1)));
+      await this.createLinkDeactivationJob(id, expirationDate);
+    }
 
     return id;
   }
@@ -43,7 +50,8 @@ export class LinksService {
     await this.linksRepository.destroy(linkId);
 
     const message = `
-      Your link: ${item.originLink} has been deactivated.
+      Your link: ${process.env.BASE_URL}${item.id} has been deactivated.
+      Origin: ${item.originLink}
       Visits: ${item.visits}
       `;
     await sendToEmailQueue(userId, message);
@@ -53,32 +61,35 @@ export class LinksService {
     return await this.linksRepository.findAllByUserId(userId);
   }
 
-  public async destroyExpired(): Promise<void> {
-    const items = await this.linksRepository.findAll();
-    for (const item of items) {
-      if (!item.expiresIn) continue;
-
-      const isExpired = this.isExpired(item.createdAt, item.expiresIn);
-      if (!isExpired) continue;
-
-      await this.linksRepository.destroy(item.id);
-
-      const message = `
-      Your link: ${item.originLink} has been expired.
-      Visits: ${item.visits}
-      `;
-      await sendToEmailQueue(item.userId, message);
+  public async createLinkDeactivationJob(linkId: string, expirationDate: Date): Promise<void> {
+    const formattedDate = expirationDate.toISOString().slice(0, -5);
+    const params: CreateScheduleCommandInput = {
+      Name: `deactivate-link-${linkId}`,
+      FlexibleTimeWindow: { Mode: 'OFF' },
+      ScheduleExpression: `at(${formattedDate})`,
+      Description: 'test',
+      Target: {
+        Arn: process.env.DEACTIVATE_EXPIRED_LAMBDA_ARN,
+        RoleArn: process.env.ROLE_ARN,
+        Input: JSON.stringify({ linkId })
+      }
     }
+    const command = new CreateScheduleCommand(params);
+    await this.scheduler.send(command);
   }
 
-  private isExpired(createdAtISO: string, expiresIn: string): boolean {
-    const createdAt = new Date(createdAtISO);
+  public async deactivateExpired(linkId: string): Promise<void> {
+    const item = await this.linksRepository.findOneById(linkId);
 
-    const value = Number(expiresIn.at(0));
+    if (!item) throw new NotFoundException();
 
-    createdAt.setDate(createdAt.getDate() + value);
+    await this.linksRepository.destroy(linkId);
 
-    const currentTime = new Date().toISOString();
-    return currentTime > createdAt.toISOString();
+    const message = `
+      Your link: ${process.env.BASE_URL}${item.id} has been expired.
+      Origin: ${item.originLink}
+      Visits: ${item.visits}
+      `;
+    await sendToEmailQueue(item.userId, message);
   }
 }
