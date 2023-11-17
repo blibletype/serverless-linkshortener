@@ -10,11 +10,16 @@ plugins:
   - serverless-esbuild
   - serverless-create-global-dynamodb-table
   - serverless-auto-swagger
+  - serverless-plugin-scripts
   - serverless-lift
 
 custom:
   esbuild:
     minify: true
+
+  scripts:
+    hooks:
+      'after:deploy:finalize': node --experimental-modules verifyEmail.mjs
 
   globalTables:
     version: v2
@@ -30,7 +35,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   stage: dev
-  region: ${opt:region}
+  region: ${env:REGION}
 
   httpApi:
     cors: true
